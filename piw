@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AUS LLPA & Waiver Optimizer</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #4f46e5;
+        --primary-hover: #4338ca;
+        --bg-color: #f3f4f6;
+        --card-bg: #ffffff;
+        --text-main: #111827;
+        --text-muted: #6b7280;
+        --border-color: #e5e7eb;
+        --success-bg: #d1fae5;
+        --success-text: #065f46;
+        --error-bg: #fee2e2;
+        --error-text: #991b1b;
+        --warning-bg: #fffbeb;
+        --warning-border: #f59e0b;
+        --warning-text: #92400e;
+        --sweet-spot-bg: #eef2ff;
+        --sweet-spot-border: #4f46e5;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        margin: 0;
+        padding: 40px 20px;
+        display: flex;
+        justify-content: center;
+      }
+
+      .dashboard {
+        background: var(--card-bg);
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+          0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        max-width: 1200px;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+        padding: 30px;
+        color: white;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+      }
+
+      .header p {
+        margin: 8px 0 0 0;
+        opacity: 0.9;
+        font-size: 14px;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      .controls-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+        background: #f9fafb;
+        padding: 24px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+      }
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      input[type="number"],
+      select {
+        padding: 12px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 15px;
+        color: var(--text-main);
+        background-color: white;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+
+      input[type="number"]:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      }
+
+      .checkbox-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 4px;
+      }
+
+      .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+
+      .checkbox-wrapper input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--primary);
+        cursor: pointer;
+      }
+
+      .checkbox-wrapper span {
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      .dashboard-layout {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+      }
+
+      .main-column {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .side-column {
+        width: 300px;
+        flex-shrink: 0;
+      }
+
+      @media (max-width: 950px) {
+        .dashboard-layout {
+          flex-direction: column;
+        }
+        .side-column {
+          width: 100%;
+        }
+      }
+
+      .instruction-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        position: sticky;
+        top: 24px;
+      }
+
+      .instruction-card h3 {
+        margin-top: 0;
+        font-size: 16px;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      .instruction-step {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        gap: 12px;
+      }
+
+      .instruction-step:last-child {
+        margin-bottom: 0;
+      }
+
+      .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        font-size: 13px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+
+      .step-text {
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text-main);
+        margin: 0;
+      }
+
+      #warningContainer {
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .warning-box {
+        background-color: var(--warning-bg);
+        border-left: 4px solid var(--warning-border);
+        color: var(--warning-text);
+        padding: 14px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+      }
+
+      th,
+      td {
+        padding: 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      th {
+        background-color: #f9fafb;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      tbody tr {
+        transition: background-color 0.15s ease;
+      }
+
+      tbody tr:hover {
+        background-color: #f9fafb;
+      }
+
+      .ltv-cell {
+        font-weight: 700;
+        font-size: 16px;
+      }
+
+      .primary-value {
+        font-family: "Inter", monospace;
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--primary);
+      }
+
+      .secondary-value {
+        font-family: "Inter", sans-serif;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+        font-weight: 500;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 9999px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .badge-success {
+        background-color: var(--success-bg);
+        color: var(--success-text);
+      }
+
+      .badge-error {
+        background-color: var(--error-bg);
+        color: var(--error-text);
+      }
+
+      .sweet-spot {
+        background-color: var(--sweet-spot-bg) !important;
+        position: relative;
+      }
+
+      .sweet-spot td {
+        border-top: 2px solid var(--sweet-spot-border);
+        border-bottom: 2px solid var(--sweet-spot-border);
+      }
+
+      .sweet-spot td:first-child {
+        border-left: 4px solid var(--sweet-spot-border);
+      }
+
+      .sweet-spot td:last-child {
+        border-right: 2px solid var(--sweet-spot-border);
+      }
+
+      .target-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--primary);
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .footer-notes {
+        margin-top: 24px;
+        padding: 16px;
+        background: #f9fafb;
+        border-radius: 8px;
+        font-size: 13px;
+        color: var(--text-muted);
+        border: 1px dashed var(--border-color);
+      }
+
+      .footer-notes strong {
+        color: var(--text-main);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard">
+      <div class="header">
+        <h1>AUS Parameter Optimizer</h1>
+        <p>
+          Calculate optimal property values to minimize LLPAs and maximize
+          appraisal waiver eligibility.
+        </p>
+      </div>
+
+      <div class="content">
+        <div class="controls-grid">
+          <div class="input-group">
+            <label for="loanAmount">Loan Amount</label>
+            <input type="number" id="loanAmount" value="300000" step="5000" />
+          </div>
+          <div class="input-group">
+            <label for="creditScore">Credit Bracket</label>
+            <select id="creditScore">
+              <option value=">=780" selected>780+</option>
+              <option value="760-779">760 - 779</option>
+              <option value="740-759">740 - 759</option>
+              <option value="720-739">720 - 739</option>
+              <option value="700-719">700 - 719</option>
+              <option value="680-699">680 - 699</option>
+              <option value="660-679">660 - 679</option>
+              <option value="640-659">640 - 659</option>
+              <option value="<=639">639 or less</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="loanPurpose">Loan Purpose</label>
+            <select id="loanPurpose">
+              <option value="LCO">Rate & Term</option>
+              <option value="CO">Cash-Out Refinance</option>
+              <option value="PURCH">Purchase</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="occupancy">Occupancy Type</label>
+            <select id="occupancy">
+              <option value="Primary">Primary Residence</option>
+              <option value="Second">Second Home</option>
+              <option value="Investment">Investment Property</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Property Modifiers</label>
+            <div class="checkbox-container">
+              <label class="checkbox-wrapper">
+                <input type="checkbox" id="isCondo" />
+                <span>Condominium</span>
+              </label>
+              <label class="checkbox-wrapper">
+                <input type="checkbox" id="isMultifamily" />
+                <span>2-4 Unit Property</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-layout">
+          <div class="main-column">
+            <div id="warningContainer"></div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Target LTV</th>
+                  <th>Target AUS Value (Buffered)</th>
+                  <th>Total LLPA Hit</th>
+                  <th>Waiver Eligible</th>
+                  <th>Recommendation</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody"></tbody>
+            </table>
+
+            <div class="footer-notes">
+              <strong>Universal Exclusions:</strong> According to Fannie Mae
+              guidelines, Value Acceptance (Appraisal Waivers) are completely
+              ineligible for: 2-4 unit properties, manufactured homes, co-ops,
+              HomeStyle Renovation loans, Texas Section 50(a)(6) loans, or any
+              transaction where the purchase price or estimated value is
+              $1,000,000 or more.
+            </div>
+          </div>
+
+          <div class="side-column">
+            <div class="instruction-card">
+              <h3>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Workflow Guide
+              </h3>
+              <div class="instruction-step">
+                <span class="step-number">1</span>
+                <p class="step-text">
+                  <strong>Locate the Sweet Spot.</strong> This row represents
+                  the lowest property value you can run while remaining eligible
+                  for a waiver with the lowest possible LLPA hit.
+                </p>
+              </div>
+              <div class="instruction-step">
+                <span class="step-number">2</span>
+                <p class="step-text">
+                  <strong>Run your initial AUS.</strong> Enter the
+                  <strong>Target AUS Value (Buffered)</strong> into your
+                  system's Appraised Value field. This buffered number creates a
+                  safety net that protects your waiver if the loan amount
+                  increases slightly.
+                  <em
+                    >(Note: The 'Exact Minimum' is the absolute floor required
+                    to stay under the LTV threshold).</em
+                  >
+                </p>
+              </div>
+              <div class="instruction-step">
+                <span class="step-number">3</span>
+                <p class="step-text">
+                  <strong>Move down if needed.</strong> If the waiver is denied
+                  at the sweet spot, move down to the next eligible LTV tier
+                  below it (e.g., from 80% to 75%) and rerun your AUS.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // LLPA Database derived from Fannie Mae Matrix
+      const llpaDb = {
+        PURCH: {
+          base: {
+            ">=780": {
+              60: 0.0,
+              70: 0.0,
+              75: 0.0,
+              80: 0.375,
+              85: 0.375,
+              90: 0.25,
+              95: 0.25,
+            },
+            "760-779": {
+              60: 0.0,
+              70: 0.0,
+              75: 0.25,
+              80: 0.625,
+              85: 0.625,
+              90: 0.5,
+              95: 0.5,
+            },
+            "740-759": {
+              60: 0.0,
+              70: 0.375,
+              75: 0.125,
+              80: 1.0,
+              85: 0.875,
+              90: 0.75,
+              95: 0.625,
+            },
+            "720-739": {
+              60: 0.0,
+              70: 0.25,
+              75: 0.75,
+              80: 1.25,
+              85: 1.25,
+              90: 1.0,
+              95: 0.875,
+            },
+            "700-719": {
+              60: 0.0,
+              70: 0.875,
+              75: 0.375,
+              80: 1.5,
+              85: 1.375,
+              90: 1.25,
+              95: 1.125,
+            },
+            "680-699": {
+              60: 0.0,
+              70: 1.125,
+              75: 0.625,
+              80: 1.75,
+              85: 1.875,
+              90: 1.5,
+              95: 1.375,
+            },
+            "660-679": {
+              60: 0.0,
+              70: 0.75,
+              75: 1.375,
+              80: 1.875,
+              85: 2.125,
+              90: 1.75,
+              95: 1.625,
+            },
+            "640-659": {
+              60: 0.0,
+              70: 1.5,
+              75: 1.125,
+              80: 2.25,
+              85: 2.5,
+              90: 2.0,
+              95: 1.875,
+            },
+            "<=639": {
+              60: 0.125,
+              70: 2.125,
+              75: 1.5,
+              80: 2.875,
+              85: 2.75,
+              90: 2.625,
+              95: 2.25,
+            },
+          },
+          condo: {
+            60: 0.0,
+            70: 0.75,
+            75: 0.75,
+            80: 0.125,
+            85: 0.125,
+            90: 0.75,
+            95: 0.75,
+          },
+          investment: {
+            60: 1.125,
+            70: 4.125,
+            75: 3.375,
+            80: 2.125,
+            85: 1.625,
+            90: 4.125,
+            95: 4.125,
+          },
+          second: {
+            60: 1.125,
+            70: 3.375,
+            75: 1.625,
+            80: 4.125,
+            85: 2.125,
+            90: 4.125,
+            95: 4.125,
+          },
+          multifamily: {
+            60: 0.0,
+            70: 0.625,
+            75: 0.625,
+            80: 0.375,
+            85: 0.375,
+            90: 0.625,
+            95: 0.625,
+          },
+        },
+        LCO: {
+          base: {
+            ">=780": {
+              60: 0.0,
+              70: 0.0,
+              75: 0.125,
+              80: 0.5,
+              85: 0.5,
+              90: 0.375,
+              95: 0.375,
+            },
+            "760-779": {
+              60: 0.0,
+              70: 0.125,
+              75: 0.375,
+              80: 0.875,
+              85: 0.75,
+              90: 0.625,
+              95: 0.625,
+            },
+            "740-759": {
+              60: 0.0,
+              70: 0.25,
+              75: 0.75,
+              80: 1.125,
+              85: 1.125,
+              90: 1.0,
+              95: 1.0,
+            },
+            "720-739": {
+              60: 0.0,
+              70: 0.5,
+              75: 1.0,
+              80: 1.625,
+              85: 1.5,
+              90: 1.25,
+              95: 1.25,
+            },
+            "700-719": {
+              60: 0.0,
+              70: 0.625,
+              75: 1.25,
+              80: 1.875,
+              85: 1.75,
+              90: 1.625,
+              95: 1.625,
+            },
+            "680-699": {
+              60: 0.0,
+              70: 0.875,
+              75: 1.625,
+              80: 2.5,
+              85: 2.125,
+              90: 1.75,
+              95: 1.75,
+            },
+            "660-679": {
+              60: 0.0,
+              70: 1.125,
+              75: 1.875,
+              80: 3.0,
+              85: 2.375,
+              90: 2.125,
+              95: 2.125,
+            },
+            "640-659": {
+              60: 0.25,
+              70: 1.375,
+              75: 2.125,
+              80: 2.875,
+              85: 2.875,
+              90: 2.5,
+              95: 2.5,
+            },
+            "<=639": {
+              60: 0.0,
+              70: 1.75,
+              75: 2.5,
+              80: 3.5,
+              85: 3.625,
+              90: 2.5,
+              95: 2.5,
+            },
+          },
+          condo: {
+            60: 0.0,
+            70: 0.125,
+            75: 0.125,
+            80: 0.75,
+            85: 0.75,
+            90: 0.75,
+            95: 0.75,
+          },
+          investment: {
+            60: 1.125,
+            70: 1.625,
+            75: 3.375,
+            80: 2.125,
+            85: 4.125,
+            90: 4.125,
+            95: 4.125,
+          },
+          second: {
+            60: 1.125,
+            70: 1.625,
+            75: 2.125,
+            80: 3.375,
+            85: 4.125,
+            90: 4.125,
+            95: 4.125,
+          },
+          multifamily: {
+            60: 0.0,
+            70: 0.375,
+            75: 0.375,
+            80: 0.625,
+            85: 0.625,
+            90: 0.625,
+            95: 0.625,
+          },
+        },
+        CO: {
+          base: {
+            ">=780": { 60: 0.375, 70: 0.625, 75: 0.875, 80: 1.375 },
+            "760-779": { 60: 0.375, 70: 0.875, 75: 1.25, 80: 1.875 },
+            "740-759": { 60: 0.375, 70: 1.0, 75: 1.625, 80: 2.375 },
+            "720-739": { 60: 0.5, 70: 1.375, 75: 2.0, 80: 2.75 },
+            "700-719": { 60: 0.5, 70: 1.625, 75: 2.625, 80: 3.25 },
+            "680-699": { 60: 0.625, 70: 2.0, 75: 2.875, 80: 3.75 },
+            "660-679": { 60: 0.375, 70: 2.75, 75: 4.0, 80: 4.75 },
+            "640-659": { 60: 1.375, 70: 3.125, 75: 4.625, 80: 5.125 },
+            "<=639": { 60: 1.375, 70: 3.375, 75: 4.875, 80: 5.125 },
+          },
+          condo: { 60: 0.0, 70: 0.125, 75: 0.125, 80: 0.75 },
+          investment: { 60: 1.125, 70: 1.625, 75: 2.125, 80: 3.375 },
+          second: { 60: 1.125, 70: 1.625, 75: 2.125, 80: 3.375 },
+          multifamily: { 60: 0.0, 70: 0.375, 75: 0.375, 80: 0.625 },
+        },
+      };
+
+      function calculate() {
+        const loanAmount =
+          parseFloat(document.getElementById("loanAmount").value) || 0;
+        const creditBracket = document.getElementById("creditScore").value;
+        const purpose = document.getElementById("loanPurpose").value;
+        const occupancy = document.getElementById("occupancy").value;
+        const isCondo = document.getElementById("isCondo").checked;
+        const isMultifamily = document.getElementById("isMultifamily").checked;
+
+        const resultsBody = document.getElementById("resultsBody");
+        const warningContainer = document.getElementById("warningContainer");
+
+        resultsBody.innerHTML = "";
+        warningContainer.innerHTML = "";
+
+        // Handle Warnings
+        let warnings = [];
+        if (purpose === "PURCH" && occupancy === "Investment") {
+          warnings.push(
+            "⚠️ <strong>Investment Property Alert:</strong> Investment properties are entirely ineligible for Value Acceptance (Appraisal Waivers) on Purchase transactions."
+          );
+        } else if (occupancy === "Investment") {
+          warnings.push(
+            "⚠️ <strong>Investment Property Alert:</strong> Value Acceptance (Appraisal Waivers) will not be granted if you are using rental income from the subject property to qualify the borrower."
+          );
+        }
+        if (isMultifamily) {
+          warnings.push(
+            "🚫 <strong>2-4 Unit Alert:</strong> Multi-family properties are strictly ineligible for Value Acceptance (Appraisal Waivers)."
+          );
+        }
+        if (warnings.length > 0) {
+          warningContainer.innerHTML = warnings
+            .map((w) => `<div class="warning-box">${w}</div>`)
+            .join("");
+          warningContainer.style.display = "block";
+        } else {
+          warningContainer.style.display = "none";
+        }
+
+        const ltvs = [60, 70, 75, 80, 85, 90, 95];
+        const matrix = llpaDb[purpose];
+
+        let rowDataArray = [];
+
+        // Generate data for all rows
+        ltvs.forEach((ltv) => {
+          if (purpose === "CO" && ltv > 80) return; // Cash-out matrix stops at 80%
+
+          let requiredValue = loanAmount / (ltv / 100);
+
+          // Calculate 1.5% buffer, but cap it so the value isn't more than $6,000 over the minimum required
+          let idealBufferedValue = (loanAmount * 1.015) / (ltv / 100);
+          let rawBufferedValue = Math.min(
+            idealBufferedValue,
+            requiredValue + 6000
+          );
+
+          // Round the buffered value UP to the nearest $1,000
+          let bufferedValue = Math.ceil(rawBufferedValue / 1000) * 1000;
+
+          let totalLLPA = 0;
+          let isValidLLPA = true;
+
+          if (
+            matrix.base[creditBracket] &&
+            matrix.base[creditBracket][ltv] !== undefined
+          ) {
+            totalLLPA += matrix.base[creditBracket][ltv];
+          } else {
+            isValidLLPA = false;
+          }
+
+          if (isValidLLPA && occupancy === "Investment")
+            totalLLPA += matrix.investment[ltv];
+          if (isValidLLPA && occupancy === "Second")
+            totalLLPA += matrix.second[ltv];
+          if (isValidLLPA && isCondo) totalLLPA += matrix.condo[ltv];
+          if (isValidLLPA && isMultifamily)
+            totalLLPA += matrix.multifamily[ltv];
+
+          // Determine Waiver Eligibility logically
+          let waiver = false;
+          if (!isMultifamily && requiredValue < 1000000) {
+            if (purpose === "PURCH") {
+              if (occupancy === "Primary" || occupancy === "Second") {
+                waiver = ltv <= 90;
+              }
+            } else if (purpose === "LCO") {
+              if (occupancy === "Primary" || occupancy === "Second") {
+                waiver = ltv <= 90;
+              }
+              if (occupancy === "Investment") {
+                waiver = ltv <= 75;
+              }
+            } else if (purpose === "CO") {
+              if (occupancy === "Primary") {
+                waiver = ltv <= 70;
+              }
+              if (occupancy === "Second" || occupancy === "Investment") {
+                waiver = ltv <= 60;
+              }
+            }
+          }
+
+          rowDataArray.push({
+            ltv: ltv,
+            requiredValue: requiredValue,
+            bufferedValue: bufferedValue,
+            totalLLPA: totalLLPA,
+            isValidLLPA: isValidLLPA,
+            waiver: waiver,
+          });
+        });
+
+        // Determine the Sweet Spot
+        let sweetSpotLtv = -1;
+        // Specifically exclude any LTV > 80 to ensure PMI is never triggered on the optimal recommendation
+        const eligibleRows = rowDataArray.filter(
+          (r) => r.waiver && r.isValidLLPA && r.ltv <= 80
+        );
+
+        if (eligibleRows.length > 0) {
+          // Find the lowest LLPA hit among waiver-eligible options
+          const minLLPA = Math.min(...eligibleRows.map((r) => r.totalLLPA));
+          const lowestLLPARows = eligibleRows.filter(
+            (r) => r.totalLLPA === minLLPA
+          );
+          // Pick the one with the HIGHEST LTV (lowest property value)
+          const optimalRow = lowestLLPARows.reduce((prev, current) =>
+            prev.ltv > current.ltv ? prev : current
+          );
+          sweetSpotLtv = optimalRow.ltv;
+        }
+
+        // Render the table
+        rowDataArray.forEach((row) => {
+          const isSweetSpot = row.ltv === sweetSpotLtv;
+          const tr = document.createElement("tr");
+          if (isSweetSpot) tr.className = "sweet-spot";
+
+          const formatValue = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+            maximumFractionDigits: 0,
+          }).format(row.requiredValue);
+          const formatBufferedValue = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+            maximumFractionDigits: 0,
+          }).format(row.bufferedValue);
+
+          // Calculate LLPA dollar cost
+          let llpaCost = row.isValidLLPA
+            ? loanAmount * (row.totalLLPA / 100)
+            : 0;
+          const formatCost = new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+            maximumFractionDigits: 0,
+          }).format(llpaCost);
+
+          tr.innerHTML = `
+                <td class="ltv-cell">${row.ltv}%</td>
+                <td>
+                    ${
+                      row.requiredValue > 0
+                        ? `
+                        <div class="primary-value" title="Rounded UP to the nearest $1,000">${formatBufferedValue}</div>
+                        <div class="secondary-value">Exact Minimum: ${formatValue}</div>
+                    `
+                        : "-"
+                    }
+                </td>
+                <td>
+                    ${
+                      row.isValidLLPA
+                        ? `
+                        <div style="font-weight: 700;">${row.totalLLPA.toFixed(
+                          3
+                        )}%</div>
+                        <div class="secondary-value">Added Cost: ${formatCost}</div>
+                    `
+                        : '<div style="font-weight: 700;">N/A</div>'
+                    }
+                </td>
+                <td>
+                    <span class="badge ${
+                      row.waiver ? "badge-success" : "badge-error"
+                    }">
+                        ${row.waiver ? "Eligible" : "Not Eligible"}
+                    </span>
+                </td>
+                <td>
+                    ${
+                      isSweetSpot
+                        ? `<span class="target-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                        Target Sweet Spot
+                    </span>`
+                        : ""
+                    }
+                </td>
+            `;
+          resultsBody.appendChild(tr);
+        });
+      }
+
+      // Initialize Event Listeners
+      document.querySelectorAll("input, select").forEach((el) => {
+        el.addEventListener("input", calculate);
+        el.addEventListener("change", calculate);
+      });
+
+      // Run on first load
+      calculate();
+    </script>
+  </body>
+</html>
